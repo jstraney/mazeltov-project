@@ -1,0 +1,44 @@
+html
+  head
+  body(style=[
+   'font-family: "Helvetica Neue", sans-serif;font-size:16px;margin:16px auto;',
+   'padding:0;max-width:768px; color: #222; background-color: #fff;',
+  ].join(''))
+    div(lang='en')
+      table(style='table-layout:fixed;' role='presentation' border='0' cellpadding='0' cellspacing='0')
+        thead
+          tr
+            th(colspan='3' style='vertical-align: middle; text-align: center; width:100%')
+              block title
+                h1 Testing
+        tbody
+          tr
+            td(colspan='3' style=[
+              'vertical-align: middle; width:100%;',
+              'padding: 20px 0;',
+            ].join(''))
+              block content
+                p.
+                  This email has been sent out as a test, or by mistake.
+                  If you have recieved this in error, please ignore it,
+                  or delete it. We would appreciate your kindness by not
+                  marking it as spam as these are unlikely to occur.
+
+                  Thank you!
+
+          tr
+            td(style='width:33.3333%')
+              block logo
+                a(href=SERVICE_URL)
+                  img(style='width:100px; display:block; margin:0 auto;' src='cid:logo')
+
+            td(style='width:33.3333%')
+              block contact
+                div
+                  a(href="tel:" + ORG_SUPPORT_PHONE)=ORG_SUPPORT_PHONE
+                div
+                  a(href="mailto:" + ORG_SUPPORT_EMAIL)=ORG_SUPPORT_EMAIL
+
+            td(style='width:33.3333%')
+              block rights
+                span © #{ORG_NAME} #{(new Date()).getFullYear()}

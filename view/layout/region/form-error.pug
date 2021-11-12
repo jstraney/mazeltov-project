@@ -1,0 +1,19 @@
+
+if error
+  div.form-prompt.error-color
+
+    div=error.message
+
+    if error.list && error.list.constructor === Array
+
+      - const shown = {}
+
+      ul.form-prompt
+
+        each listError in error.list
+
+          if !shown[listError.key]
+
+            li=listError.message
+
+          - shown[listError.key] = true;

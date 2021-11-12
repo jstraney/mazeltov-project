@@ -1,0 +1,50 @@
+{
+  "name": "@mazeltov/project",
+  "version": "1.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node . start",
+    "start-dev": "./node_modules/.bin/nodemon index.js start",
+    "migrate": "./node_modules/.bin/knex migrate:latest",
+    "rollback": "./node_modules/.bin/knex migrate:rollback",
+    "seed": "./node_modules/.bin/knex seed:run",
+    "migration-down": "./node_modules/.bin/knex migrate:down",
+    "migration-list": "./node_modules/.bin/knex migrate:list",
+    "make-migration": "./node_modules/.bin/knex migrate:make",
+    "make-seed": "./node_modules/.bin/knex seed:make",
+    "test": "node test"
+  },
+  "author": "Jeff Straney",
+  "license": "MIT",
+  "keywords": [
+    "framework",
+    "library",
+    "boilerplate",
+    "mvc"
+  ],
+  "dependencies": {
+    "@mazeltov/controller": "^1.0.0",
+    "@mazeltov/logger": "^1.0.2",
+    "@mazeltov/middleware": "^1.0.1",
+    "@mazeltov/model": "^1.0.2",
+    "@mazeltov/service": "^1.0.0",
+    "@mazeltov/style": "^1.0.0",
+    "@mazeltov/util": "^1.0.2",
+    "bcrypt": "^5.0.1",
+    "change-case": "^4.1.2",
+    "connect-redis": "^6.0.0",
+    "cookie-parser": "^1.4.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.2",
+    "helmet": "^4.6.0",
+    "ioredis": "^4.28.0",
+    "knex": "^0.95.12",
+    "nodemailer": "^6.7.0",
+    "nodemon": "^2.0.14",
+    "pg": "^8.7.1",
+    "pug": "^3.0.2"
+  },
+  "generatedWith": "mazeltov"
+}

@@ -1,0 +1,22 @@
+extends ../email
+
+block title
+  h1 Welcome to #{ORG_NAME}!
+
+block content
+
+  -const verifyURL = `${SERVICE_URL}/verify/${result.emailVerificationToken}`;
+  p.
+    Welcome to #{ORG_NAME}. You have taken the first step to receiving
+    the quality service that we offer. To take full advantage of your
+    account, you still need to verify your email by:
+
+  ul
+    li clicking the link below
+    li copying the link URL and pasting it into your browser
+
+  p
+    a(href=verifyURL)=verifyURL
+
+  p.
+    Thanks for choosing #{ORG_NAME}!

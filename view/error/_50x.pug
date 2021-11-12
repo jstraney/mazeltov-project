@@ -1,0 +1,25 @@
+extends ../layout/page.pug
+
+block content
+
+  div.ui-frame-med-width
+
+    h1 Whoops!
+
+    p.
+      Something went wrong on our side while trying to make the webpage!
+      If the problem persists, please contact our technical team:
+
+    include ./support
+
+    if NODE_ENV === 'development'
+
+      h4 Developer Debug
+
+      pre
+        code=error
+
+      p.form-prompt.
+        This will not be visible when NODE_ENV=production
+
+

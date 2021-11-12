@@ -1,0 +1,40 @@
+extends layout/page.pug
+
+block content
+
+  div.ui-frame
+
+    div(style='background: linear-gradient(to right, #22c1c3, #fdbb2d);').med-height.halign-center.valign-center.text-center.ui-border
+
+      div.inner.full
+        h1(style='color:white;font-size:2.5em') #{ORG_NAME}!
+
+    div
+
+      h2 Welcome
+
+      p.
+        Mazeltov is a MVC set of libraries built in Nodejs, Postgres and Redis.
+        It's goal is reduce boilerplate code but give devs the flexibility to
+        design and implement effective solutions!
+
+    div
+      h2 Where to Start
+
+      h3 Tutorial
+
+      p.
+        If you like instructions please see our tutorial (Sorry, coming soon!)
+
+      h3 Digging Into Source
+
+      p.
+        If you are going to dive into the source code a good place to start
+        might be trying to a page endpoint in the <code>controller/web/page</code>
+        file.
+
+      p.
+        From there, maybe look at adding a custom model to the <code>model</code>
+        directory with API endpoints under <code>controller/api</code>.
+        <code>@mazeltov/controller</code> and <code>@mazeltov/model</code> provide
+        good examples for how auth is implemented.

@@ -1,0 +1,73 @@
+mixin pagination(listResult, path)
+  if listResult.total > listResult.result.length
+
+    div Showing #{listResult.result.length} of #{listResult.total} Results - Page #{result.currentPage} of #{result.totalPages}
+
+    div.pagination
+      if listResult.firstPage !== null
+        a(href=`${path}?page=${listResult.firstPage}`) First
+
+      if listResult.prevPage !== null
+        a(href=`${path}?page=${listResult.prevPage}`) Back
+
+      if listResult.localPages.length > 2
+        each page of listResult.localPages
+          if page == listResult.currentPage
+            a.active(href=`${path}?page=${page}`)=page
+          else
+            a(href=`${path}?page=${page}`)=page
+
+      if listResult.nextPage !== null
+        a(href=`${path}?page=${listResult.nextPage}`) Next
+
+      if listResult.lastPage !== null
+        a(href=`${path}?page=${listResult.lastPage}`) Last
+
+
+//- Form Mixins
+mixin csrf
+  input(
+    name='csrfToken'
+    type='hidden'
+    value=csrfToken
+  )
+
+mixin input()
+  - const { name = '', type = '', class: _class = ''} = attributes;
+  - const attrOverrides = { class: [_class] };
+  if error && error.lookup && error.lookup[name]
+    - attrOverrides.class.push('error');
+  - attrOverrides.class = attrOverrides.class.join(' ');
+  if !['password', 'hidden'].includes(type) && util.collection.hasKey(lastSubmission, name)
+    - attrOverrides.value = lastSubmission[name];
+  input()&attributes(attributes)&attributes(attrOverrides)
+
+
+mixin select(valueSelected, options)
+  - const { name = '', type = '', class: _class = ''} = attributes;
+  - const attrOverrides = { class: [_class] };
+  if error && error.lookup && error.lookup[name]
+    - attrOverrides.class.push('error');
+  - attrOverrides.class = attrOverrides.class.join(' ');
+  if !['password', 'hidden'].includes(type) && util.collection.hasKey(lastSubmission, name)
+    - valueSelected = lastSubmission[name];
+  select(name=id id=id)&attributes(attributes)&attributes(attrOverrides)
+    each [value, label] of options
+      option(
+        value=value
+        selected=(valueSelected === value)
+      )=label
+
+mixin nav-links(links, inline=false)
+  ul(class=(inline ? 'menu inline' : 'menu'))
+    each tuple of links
+      - const [uri, text, acl] = tuple;
+      -let canAccess = true
+      if acl && !gate(acl)
+        -canAccess = false
+      if canAccess
+        li
+          a(
+            class=(request.uri === uri ? 'active' : '')
+            href=uri
+          )=text

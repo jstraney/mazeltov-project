@@ -1,0 +1,52 @@
+extends ../layout/page.pug
+
+block content
+  form.ui-frame.small-width(method='post' action='/sign-in')
+
+    h1 Sign In
+
+    include ../layout/region/form-error.pug
+
+    input(
+      type='hidden'
+      name='csrfToken'
+      value=csrfToken
+    )
+
+    input(
+      type='hidden'
+      name='redirect_url'
+      value=args.redirect_url
+    )
+
+    label(
+      for='username'
+      class='required'
+    ) Email or Username
+
+    +input(
+      id='username'
+      type='text'
+      name='username'
+    )
+
+    label(
+      class='required'
+      for='password'
+    ) Password
+
+    +input(
+      id='password'
+      type='password'
+      name='password'
+    )
+
+    div.actions
+
+      input(
+        type='submit'
+        value='Sign In'
+      )
+
+    div.actions
+      a(href='/password-reset/new') Forgot Password?

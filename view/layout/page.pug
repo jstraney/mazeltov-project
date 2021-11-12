@@ -1,0 +1,14 @@
+include ../mixin
+html
+  head
+    include region/head
+  body
+    header
+      include region/header
+    block flash
+      include region/flash
+    main
+      block content
+        h1 yeet
+    footer
+      include region/footer

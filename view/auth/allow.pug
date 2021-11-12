@@ -1,0 +1,64 @@
+extends ../layout/page
+
+block content
+
+  form(action='/allow' method='post').ui-frame.med-width
+
+    -const client = result.client
+    -const scopes = result.scopes ? result.scopes.result : [];
+    h1 #{client.label} Is Requesting Access
+
+    include ../layout/region/form-error
+
+    //-pre=JSON.stringify(result, null, 2)
+    +csrf
+
+    input(
+      name='client_id'
+      value=args.client_id
+      type='hidden'
+    )
+
+    input(
+      name='code_challenge'
+      value=args.code_challenge
+      type='hidden'
+    )
+
+    input(
+      name='code_challenge_method'
+      value=args.code_challenge_method
+      type='hidden'
+    )
+
+    input(
+      name='redirect_url'
+      value=args.redirect_url
+      type='hidden'
+    )
+
+    input(
+      name='scopes'
+      value=args.scopes
+      type='hidden'
+    )
+
+    if scopes.length
+
+      p.
+        #{client.label} would like to access the following
+        on your #{ORG_NAME} account.
+
+      ul
+        each scope of scopes
+          li #{scope.label} - #{scope.description}
+
+    else
+      p.
+        #{client.label} would like full, unrestricted access your #{ORG_NAME} account.
+
+
+    input(
+      type='submit'
+      value='Allow Access'
+    )

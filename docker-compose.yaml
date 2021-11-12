@@ -1,0 +1,42 @@
+version: "3.9"
+services:
+  # mazeltov-app:
+  #   image: node:15.12.0-alpine3.10
+  #   working_dir: /home/node/app
+  #   env_file: .env
+  #   user: 0:0
+  #   volumes:
+  #     - ./:/home/node/app:Z
+  #   expose:
+  #     - "8080"
+  #   command: "/bin/sh -c 'npm run start-dev'"
+  mazeltov-postgres:
+    image: "postgres:13-alpine"
+    env_file: .env
+    environment:
+      POSTGRES_USER: "$DB_USER"
+      POSTGRES_DB: "$DB_DATABASE"
+      POSTGRES_PASSWORD: "$DB_PASSWORD"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - mazeltov-db:/var/lib/postgresql/data
+    expose:
+      - 5432
+    ports:
+      - 127.0.0.1:5432:5432
+  mazeltov-redis:
+    image: "redis:6.2.1-alpine"
+    env_file: .env
+    environment:
+      REDIS_PASSWORD: "$REDIS_PASSWORD"
+    command: ["redis-server", "--requirepass", "$REDIS_PASSWORD"]
+    expose:
+      - 6379
+    ports:
+      - 127.0.0.1:6379:6379
+volumes:
+  mazeltov-db:

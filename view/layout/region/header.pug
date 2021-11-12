@@ -1,0 +1,12 @@
+nav
+  a.logo(href="/")
+    img(title=ORG_NAME alt=ORG_NAME src="/image/logos/logo.png")
+  if session && session.whoami
+    - const { username } = session.whoami;
+    span #{username}
+    br
+    a(href='/account') Account
+    a(href='/sign-out') Sign Out
+  else
+    a(href='/sign-in') Sign In
+    a(href='/sign-up') Sign Up
