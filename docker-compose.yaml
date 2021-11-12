@@ -1,15 +1,17 @@
 version: "3.9"
 services:
-  # mazeltov-app:
-  #   image: node:15.12.0-alpine3.10
-  #   working_dir: /home/node/app
-  #   env_file: .env
-  #   user: 0:0
-  #   volumes:
-  #     - ./:/home/node/app:Z
-  #   expose:
-  #     - "8080"
-  #   command: "/bin/sh -c 'npm run start-dev'"
+  mazeltov-app:
+    image: node:15.12.0-alpine3.10
+    working_dir: /home/node/app
+    env_file: .env
+    user: 0:0
+    volumes:
+      - ./:/home/node/app:Z
+    ports:
+      - "443:8080"
+    expose:
+      - "443"
+    command: "/bin/sh -c 'npm run start-dev'"
   mazeltov-postgres:
     image: "postgres:13-alpine"
     env_file: .env
