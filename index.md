@@ -1,7 +1,7 @@
 # Mazeltov
 
 <img
-  src='image/logo.png'
+  src='logo.png'
   style='width:200px;margin:0 auto;display:block;'
 />
 
