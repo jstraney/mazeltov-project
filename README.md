@@ -1,20 +1,35 @@
 # Congratulations! (Mazel tov)
 
-You've set up this project using the mazeltov CLI tool. Remove these
-sections as you see fit as you expand on the base code.
+Mazeltov is a MVC framework built on Nodejs, PostreSQL and Redis.
 
-## Cloning the Repo
+## Installing
 
-If you are cloning this repository there are a few things you'll need to do.
-
-From inside directory run:
+To create a new project, say `app` for example, run:
 
 ```sh
-# for more info run `npx @mazeltov/cli project setup --help`
+npx @mazeltov/cli project create app
+```
+
+If you are git cloning a project you've already made and want to create local SSL certs and set up .env run this from inside the directory:
+
+```sh
 npx @mazeltov/cli project setup
 ```
 
-## Layout
+Once your project is set up, you'll have to run:
+
+```sh
+# run this in one shell (or use -d flag)
+docker-compose up
+
+# create necessary tables and records
+npm run migrate
+npm run seed
+```
+
+## Tutorial
+
+## Project Layout
 
 * controller - Controllers gather args from http, or cli and pass to the model
 * model - Models are responsible for "modeling" business logic and writing to database
