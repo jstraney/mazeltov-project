@@ -254,6 +254,7 @@ In this section we will cover
 
 * Creating migrations to store entities in our database
 * Rapidly building models with modelFromContext
+* Validation
 * Access control (auth)
 
 ### Migrate
@@ -587,3 +588,69 @@ Here, we use the `cross` function to produce many function, config pairs and eac
 Now, the controller will check that functions (named validate{action}) exist and adds validateArgs middleware. Try sending a request to '/api/cat/roy' to get a 400 response.
 
 ### Access Control
+
+Mazeltov primarily uses JSON Web Tokens for authentication, and internal database tables for authorization. JWTS have data in them called claims, and some data has been standardized into what are called **standard claims**. Most access control relies on a claim called the subject which is usually the person the token was granted for.
+
+Similar to validators, access is controlled creating subjectAuthorizor methods
+
+```
+const {
+  //...
+  subjectAuthorizor,
+} = require('@mazeltov/model/lib');
+
+module.exports = ( ctx ) => modelFromContext({
+  ...ctx,
+  //...
+}, [
+  creator,
+  updater,
+  //...
+  ...cross([ subjectAuthorizor ], [
+    {
+      fnName: 'canCreate',
+      scoped: true,
+      // only use ownershipArgs if the action requires this field.
+      ownershipArg: 'accountPersonId',
+    },
+    {
+      fnName: 'canUpdate',
+      scoped: true,
+      ownershipColumn: 'accountPersonId',
+    },
+    {
+      fnName: 'canRemove',
+      scoped: true,
+      ownershipColumn: 'accountPersonId',
+    },
+    {
+      fnName: 'canGet',
+      scoped: true,
+      ownershipColumn: 'accountPersonId',
+    },
+    // We'll make listing public
+  ]),
+]);
+```
+
+Just like with validation, our bootstrappd controller now sees there is a can(action) method and adds a middleware called `canAccess`
+
+What does this do? Now when an API request is made:
+
+* a middleware called requireAuth will check that there is a valid JWT in authorization header
+* canAccess middleware recognizes this is a person based on scopes and looks up the persons permissions from their id
+* The permissions and whether the person has an administrative role, is passed to our subjectAuthorizor
+* the subjectAuthorizor action throws an error if the permission is not satisfied
+
+#### A Word on Permissions
+
+Mazeltov is permission based. Roles logically organize permissions in meaningful ways, but permissions are always checked for authorization.
+
+Permissions (in access.permission table) use this scheme:
+
+`can (action) [own|any] (entityName)`
+
+Where **own** or **any** exist only for **scoped** permissions (indicated in model by scoped: true). A scoped permission just distinguishes a resource
+as one belonging to the requestor, or anyones resource. An unscoped permission means the resource doesn't belong to anyone in particular (e.g. "can list role").
+
+scopes in the context of permissions are not the same a token scope.
