@@ -353,13 +353,8 @@ module.exports = ( ctx ) => modelFromContext({
     'isChonky',
     'catSaying',
   ],
-  // cross schema joins have to use joinRaw. Lets get a PR to get schemas work more intuitively!
   joins: [
-    ['joinRaw', 'INNER JOIN account.account AS account WHERE account.personId = cat.cat.accountPersonId']
-    /**
-    * Typical join syntax which works well within same schema is.
-    * [ joinType, ...knexJoinArgs]
-    */
+    ['innerJoin', 'account.account AS account', 'account.personId', 'cat.accountPersonId']
   ],
   // query builder for multiple cat search
   onBuildListWhere: {
@@ -489,7 +484,7 @@ module.exports = ( ctx ) => modelFromContext({
     'catSaying',
   ],
   joins: [
-    ['joinRaw', 'INNER JOIN account.account AS account WHERE account.personId = cat.cat.accountPersonId']
+    ['innerJoin', 'account.account AS account', 'account.personId', 'cat.accountPersonId']
   ],
   // query builder for multiple cat search
   onBuildListWhere: {
