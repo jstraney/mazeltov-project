@@ -71,8 +71,7 @@ module.exports = ( ctx = {} ) => {
       ]
     ],
     joins: [
-      // cross schema joins have to be raw but they work!
-      ['joinRaw', 'LEFT JOIN access.person AS person ON person.id = account.person_id'],
+      ['leftJoin', 'access.person AS person',  'person.id', 'account.person_id'],
       ['innerJoin', 'service', 'service.level', 'account.serviceLevel'],
     ],
     createColumns: [

@@ -1,5 +1,10 @@
 # Congratulations! (Mazel tov)
 
+<img
+  src='public/image/logos/logo.png'
+  style='width:200px;display:block;margin:0 auto;'
+/>
+
 Mazeltov is a MVC framework built on Nodejs, PostreSQL and Redis.
 
 ## Installing
@@ -28,6 +33,8 @@ npm run seed
 ```
 
 ## Tutorial
+
+Read the [tutorial](https://jstraney.github.io/mazeltov-project/#tutorial) on github pages
 
 ## Project Layout
 

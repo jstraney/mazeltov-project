@@ -27,7 +27,7 @@
     "@mazeltov/controller": "^1.0.0",
     "@mazeltov/logger": "^1.0.2",
     "@mazeltov/middleware": "^1.0.1",
-    "@mazeltov/model": "^1.0.2",
+    "@mazeltov/model": "^1.0.3",
     "@mazeltov/service": "^1.0.0",
     "@mazeltov/style": "^1.0.0",
     "@mazeltov/util": "^1.0.2",
