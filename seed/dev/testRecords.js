@@ -14,7 +14,7 @@ const {
   type: {
     isNotNull,
   },
-} = require('@mazeltov/util');
+} = require('@mazeltov/core/lib/util');
 
 const {
   SERVICE_HOSTNAME,
@@ -41,8 +41,8 @@ exports.seed = async function(knex) {
         isEmailVerified: true,
         emailVerificationToken: randStr(32),
         mobilePhoneCountryCode: 'US',
-        mobilePhoneAreaCode: '352',
-        mobilePhoneNumber: '4547665',
+        mobilePhoneAreaCode: '123',
+        mobilePhoneNumber: '1231234',
       },
       {
         id: 2,
@@ -53,8 +53,8 @@ exports.seed = async function(knex) {
         isEmailVerified: true,
         emailVerificationToken: randStr(32),
         mobilePhoneCountryCode: 'US',
-        mobilePhoneAreaCode: '352',
-        mobilePhoneNumber: '4547665',
+        mobilePhoneAreaCode: '123',
+        mobilePhoneNumber: '1231234',
       },
     ])
     .onConflict('username')

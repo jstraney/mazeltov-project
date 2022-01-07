@@ -1,0 +1,19 @@
+block meta
+  title=title
+  meta(name='viewport' content='width=device-width, initial-scale=1')
+  meta(name='referrer' content='same-origin')
+block styles
+  link(
+    rel='preconnect'
+    href='https://fonts.gstatic.com/'
+  )
+  -assets.style('mazeltov-core')
+block scripts
+  -assets.script('jquery-core')
+  -assets.script('jquery-ui-core')
+  -assets.script('mazeltov-core')
+  -assets.script('mazeltov-access')
+if assets.have('style')
+  style!=assets.loadEach('style')
+if assets.have('script')
+  +script!=assets.loadEach('script')

@@ -1,14 +1,5 @@
-module.exports = (ctx) => require('@mazeltov/service')({
+module.exports = (ctx, serviceLoader) => serviceLoader({
   ...ctx,
-
-  controllerServiceConfig: {
-    onSwitchApiRoute: (action, model) => null,
-    onSwitchWebRoute: (action, model) => null,
-    onSwitchUseArgs: (action, model) => null,
-    onSwitchWebTemplate: (action, model) => null,
-    onSwitchCommandLineOptions: (action, model) => null,
-    onSwitchCommandLineHelp: (action, model) => null,
-  },
 
   emailServiceConfig: {
     senderEmail: 'donotreply@' + ctx.SERVICE_HOSTNAME,
@@ -27,11 +18,6 @@ module.exports = (ctx) => require('@mazeltov/service')({
     templateDir: 'view',
     pug: require('pug'),
   },
-
 }, [
-  'init',
-  'acl',
-  'controller',
-  'template',
-  'email',
+  require('@mazeltov/core/service'),
 ]);

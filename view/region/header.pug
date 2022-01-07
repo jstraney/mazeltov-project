@@ -5,8 +5,11 @@ nav
     - const { username } = session.whoami;
     span #{username}
     br
-    a(href='/account') Account
-    a(href='/sign-out') Sign Out
+    +menu('signedInTop', null, {
+      inline: true,
+      resourceMap: {
+        'get:account': session.whoami,
+      },
+    })
   else
-    a(href='/sign-in') Sign In
-    a(href='/sign-up') Sign Up
+    +menu('anonymousTop', null, { inline: true })

@@ -1,14 +1,15 @@
-include ../mixin
+include /core/mixin
 html
   head
-    include region/head
+    include /region/head
   body
     header
-      include region/header
+      include /region/header
     block flash
-      include region/flash
+      include /region/flash
     main
       block content
         h1 yeet
+      +debug
     footer
-      include region/footer
+      include /region/footer

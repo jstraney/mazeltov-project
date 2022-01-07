@@ -2,7 +2,7 @@ const {
   useArgs,
   validateArgs,
   viewTemplate,
-} = require('@mazeltov/middleware');
+} = require('@mazeltov/core/lib/middleware');
 
 module.exports = ( ctx = {} ) => {
 
@@ -13,7 +13,7 @@ module.exports = ( ctx = {} ) => {
     loggerLib,
   } = ctx;
 
-  const logger = loggerLib('app/controller/web/page');
+  const logger = loggerLib(`${ctx.SERVICE_NAME}/controller/web/page`);
 
   const router = require('express').Router();
 

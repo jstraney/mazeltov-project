@@ -8,16 +8,16 @@ const {
   collection: {
     cross,
   },
-} = require('@mazeltov/util');
+} = require('@mazeltov/core/lib/util');
 
 const {
   requireAuth,
   requireSessionAuth,
   useCSRF,
   requireCSRF,
-} = require('@mazeltov/middleware');
+} = require('@mazeltov/core/lib/middleware');
 
-module.exports = ( ctx = {}) => {
+module.exports = async ( ctx = {}) => {
 
   const {
     SERVICE_CERT_FILE,
@@ -26,6 +26,14 @@ module.exports = ( ctx = {}) => {
     appRoot,
     loggerLib,
     publicKeyPem,
+    services: {
+      routeService: {
+        route,
+      },
+      hookService: {
+        redux,
+      },
+    },
   } = ctx;
 
   const logger = loggerLib(`${ctx.SERVICE_NAME}/controller`);
@@ -35,35 +43,20 @@ module.exports = ( ctx = {}) => {
   const nextCtx = {
     ...ctx,
     app,
-    // static instances of middleware shared across http controllers
-    _requireAuth: requireAuth({
-      publicKeyPem,
-      logger,
-    }),
-    _requireSessionAuth: requireSessionAuth({
-      publicKeyPem,
-      redirectUriOnFail: '/sign-in',
-      logger,
-    }),
-    _useCSRF: useCSRF({
-      errorRedirectURL: 'back',
-      logger,
-    }),
-    _requireCSRF: requireCSRF({
-      authorizedHostname: ctx.SERVICE_HOSTNAME,
-      errorRedirectURL: '/sign-in',
-      logger,
-    }),
+    // static instances of middleware shared across http controllers that are
+    // so common in how they are configured, only once instance is made
+    // hence "static"
+    ...redux('staticHttpMiddleware', {}),
   };
 
-  const controllers = require('@mazeltov/controller')(nextCtx, [
+  const controllers = await require('@mazeltov/core/controller')(nextCtx, [
     'cli',
     'http',
   ]);
 
   const [ command ] = process.argv.slice(2);
 
-  if (['start'].includes(command)) {
+  if (command === 'start') {
 
     app.use(require('./http/_middleware')(nextCtx));
 
@@ -94,12 +87,16 @@ module.exports = ( ctx = {}) => {
     app.use(require('./http/_error')(nextCtx));
 
     server.listen(ctx.SERVICE_PORT, ctx.SERVICE_IFACE, () => {
-      console.log('%s %s:%s', ctx.SERVICE_NAME, ctx.SERVICE_IFACE, ctx.SERVICE_PORT);
+      logger.info('%s running on %s:%s', ctx.SERVICE_NAME, ctx.SERVICE_IFACE, ctx.SERVICE_PORT);
     });
 
   } else if (command) {
 
     const cli = require('./cli')(controllers);
+
+    // these are called to close connection pools and end process.
+    ctx.db.destroy();
+    ctx.ioredis.disconnect();
 
   }
 

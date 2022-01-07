@@ -1,3 +1,3 @@
 module.exports = (controllers) => controllers.cliController.consoleCommands([
-  'person',
-]).prepareAndRun();
+  require('@mazeltov/access/controller/cli'),
+]).prepareAndRun(process.argv.slice(2));

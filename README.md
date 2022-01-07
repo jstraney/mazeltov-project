@@ -51,9 +51,10 @@ Read the [tutorial](https://jstraney.github.io/mazeltov-project/#tutorial) on gi
 
 ## Extending Layout
 
-These are just suggestions for expanding the layout if you had to:
+These are just suggestions for expanding the layout if you had to (or wanted to):
 
 * lib - Standalone libraries (though @mazeltov/util has a lot of coverage for getting things done)
+* src - Client side source code for a bundled SPA. You coud bundle this in the public directory, and could even put your client source in a separate repo.
 
 ## Adding Custom Code
 

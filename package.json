@@ -1,6 +1,6 @@
 {
   "name": "@mazeltov/project",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -24,13 +24,7 @@
     "mvc"
   ],
   "dependencies": {
-    "@mazeltov/controller": "^1.0.0",
-    "@mazeltov/logger": "^1.0.2",
-    "@mazeltov/middleware": "^1.0.1",
-    "@mazeltov/model": "^1.0.3",
-    "@mazeltov/service": "^1.0.0",
-    "@mazeltov/style": "^1.0.0",
-    "@mazeltov/util": "^1.0.2",
+    "@mazeltov/core": "file:../core",
     "bcrypt": "^5.0.1",
     "change-case": "^4.1.2",
     "connect-redis": "^6.0.0",
@@ -41,10 +35,12 @@
     "helmet": "^4.6.0",
     "ioredis": "^4.28.0",
     "knex": "^0.95.12",
+    "luxon": "^2.1.1",
     "nodemailer": "^6.7.0",
     "nodemon": "^2.0.14",
     "pg": "^8.7.1",
-    "pug": "^3.0.2"
+    "pug": "^3.0.2",
+    "rwlock": "^5.0.0"
   },
   "generatedWith": "mazeltov"
 }

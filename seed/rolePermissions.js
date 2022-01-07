@@ -16,7 +16,7 @@ const {
   string: {
     joinWords,
   },
-} = require('@mazeltov/util');
+} = require('@mazeltov/core/lib/util');
 
 /**
  * TODO: set up docs explaining

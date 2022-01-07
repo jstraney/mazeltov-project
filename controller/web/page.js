@@ -1,29 +1,27 @@
 const {
-  useArgs,
-  validateArgs,
   viewTemplate,
-} = require('@mazeltov/middleware');
+} = require('@mazeltov/core/lib/middleware');
+
+const {
+  webController,
+} = require('@mazeltov/core/lib/controller');
 
 module.exports = ( ctx = {} ) => {
 
   const {
-    _requireSessionAuth,
-    _useCSRF,
-    _requireCSRF,
-    loggerLib,
+    models,
   } = ctx;
 
-  const logger = loggerLib('app/controller/web/page');
+  const controller = webController('page', ctx)
 
-  const router = require('express').Router();
-
-  router.get('/', [
+  controller.get('home', [
     viewTemplate({
       title: 'Welcome',
       template: 'index',
-    })
+      logger,
+    }),
   ]);
 
-  return router;
+  return controller;
 
 };
