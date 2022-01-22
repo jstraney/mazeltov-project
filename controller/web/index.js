@@ -6,6 +6,6 @@ module.exports = async (ctx, webRouterLoader) => webRouterLoader(ctx, [
 
   'page',
 
-  require('@mazeltov/access/controller/web')
+  require('@mazeltov/access/controller/web'),
 
 ]);
