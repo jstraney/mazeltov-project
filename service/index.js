@@ -18,5 +18,4 @@ module.exports = (ctx, serviceLoader) => serviceLoader({
   },
 }, [
   require('@mazeltov/core/service'),
-  require('@mazeltov/access/service'),
 ]);

@@ -17,8 +17,7 @@
     "mvc"
   ],
   "dependencies": {
-    "@mazeltov/access": "1.0.0",
-    "@mazeltov/core": "2.0.0",
+    "@mazeltov/core": "2.0.3",
     "bcrypt": "^5.0.1",
     "change-case": "^4.1.2",
     "connect-redis": "^6.0.0",
