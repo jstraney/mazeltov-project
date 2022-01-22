@@ -15,7 +15,6 @@ services:
   mazeltov-postgres:
     image: "postgres:13-alpine"
     env_file: .env
-    hostname: "$APP_DB_HOST"
     environment:
       POSTGRES_USER: "$APP_DB_USER"
       POSTGRES_DB: "$APP_DB_DATABASE"
@@ -33,7 +32,6 @@ services:
       - 127.0.0.1:5432:5432
   mazeltov-redis:
     image: "redis:6.2.1-alpine"
-    hostname: "$APP_REDIS_HOSTNAME"
     env_file: .env
     environment:
       REDIS_PASSWORD: "$APP_REDIS_PASSWORD"
