@@ -1,5 +1,7 @@
-module.exports = (controllers) => controllers.httpController.apiRouters([
+module.exports = async (ctx, apiRouterLoader) => apiRouterLoader(ctx, [
 
   '_middleware',
+
+  require('@mazeltov/access/controller/api'),
 
 ]);

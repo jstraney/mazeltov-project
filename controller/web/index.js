@@ -1,4 +1,4 @@
-module.exports = (controllers) => controllers.httpController.webRouters([
+module.exports = async (ctx, webRouterLoader) => webRouterLoader(ctx, [
 
   '_middleware',
 
@@ -6,6 +6,6 @@ module.exports = (controllers) => controllers.httpController.webRouters([
 
   'page',
 
-  // require('@mazeltov/access/controller/web')
+  require('@mazeltov/access/controller/web')
 
 ]);

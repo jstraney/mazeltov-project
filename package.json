@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node . start",
-    "start-dev": "./node_modules/.bin/nodemon index.js start",
+    "start": "node . server start",
+    "start-dev": "./node_modules/.bin/nodemon --ignore seed/ --ignore migrate/ index.js server start",
     "migrate": "./node_modules/.bin/knex migrate:latest",
     "rollback": "./node_modules/.bin/knex migrate:rollback",
     "seed": "./node_modules/.bin/knex seed:run",
@@ -24,6 +24,7 @@
     "mvc"
   ],
   "dependencies": {
+    "@mazeltov/access": "file:../access",
     "@mazeltov/core": "file:../core",
     "bcrypt": "^5.0.1",
     "change-case": "^4.1.2",

@@ -1,11 +1,4 @@
-/**
- * TODO: consider moving this into the
- * @mazeltov/cli repo and offer hooks or callbacks to register
- * migration directories.
- */
 require('dotenv').config();
-
-const [ schema ] = process.argv.slice(3);
 
 const {
   snakeCase,
@@ -25,51 +18,57 @@ const toCamelCase = (row) => {
 
 }
 
-const {
-  DB_CLIENT,
-  DB_USER,
-  DB_PASSWORD,
-  DB_HOST,
-  DB_DATABASE,
-  DB_DEBUG,
-  DB_MIN_POOL = 2,
-  DB_MAX_POOL = 10,
-  DB_TIMEOUT = 60000,
-  NODE_ENV,
-} = process.env;
+module.exports = async (config = null) => {
 
-module.exports = {
-  client: DB_CLIENT,
-  debug: DB_DEBUG === 'true',
-  wrapIdentifier: (value) => {
-    if (value === '*') {
-      return value;
-    }
-    return `"${snakeCase(value)}"`;
-  },
-  postProcessResponse: (result) => {
-    if (Array.isArray(result)) {
-      return result.map(toCamelCase);
-    } else if (typeof result === 'object') {
-      return toCamelCase(result);
-    }
-    return result;
-  },
-  connection: {
-    user: DB_USER,
-    password: DB_PASSWORD,
-    host: DB_HOST,
-    database: DB_DATABASE,
-  },
-  pool : {
-    min: DB_MIN_POOL,
-    max: DB_MAX_POOL,
-  },
-  acquireConnectionTimeout: DB_TIMEOUT,
-  migrations: {
-    directory: './migrate',
-  },
-  seeds: {
-    directory: NODE_ENV === 'production' ? './seed/prod' : './seed/dev',
-  },
+  const {
+    APP_DB_CLIENT,
+    APP_DB_USER,
+    APP_DB_PASSWORD,
+    APP_DB_HOST,
+    APP_DB_DATABASE,
+    APP_DB_DEBUG,
+    APP_DB_MIN_POOL = 2,
+    APP_DB_MAX_POOL = 10,
+    APP_DB_TIMEOUT = 60000,
+  } = (config || process.env);
+
+  const {
+    NODE_ENV,
+  } = process.env;
+
+  return {
+    client: APP_DB_CLIENT,
+    debug: APP_DB_DEBUG === 'true',
+    wrapIdentifier: (value) => {
+      if (value === '*') {
+        return value;
+      }
+      return `"${snakeCase(value)}"`;
+    },
+    postProcessResponse: (result) => {
+      if (Array.isArray(result)) {
+        return result.map(toCamelCase);
+      } else if (typeof result === 'object') {
+        return toCamelCase(result);
+      }
+      return result;
+    },
+    connection: {
+      user: APP_DB_USER,
+      password: APP_DB_PASSWORD,
+      host: APP_DB_HOST,
+      database: APP_DB_DATABASE,
+    },
+    pool : {
+      min: APP_DB_MIN_POOL,
+      max: APP_DB_MAX_POOL,
+    },
+    acquireConnectionTimeout: APP_DB_TIMEOUT,
+    migrations: {
+      directory: './migrate',
+    },
+    seeds: {
+      directory: NODE_ENV === 'production' ? './seed/prod' : './seed/dev',
+    },
+  };
 };

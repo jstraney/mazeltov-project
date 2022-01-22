@@ -2,8 +2,6 @@ module.exports = (ctx, serviceLoader) => serviceLoader({
   ...ctx,
 
   emailServiceConfig: {
-    senderEmail: 'donotreply@' + ctx.SERVICE_HOSTNAME,
-    senderName: ctx.ORG_NAME,
     nodemailer: require('nodemailer'),
     defaultAttachments: [
       {
@@ -20,4 +18,5 @@ module.exports = (ctx, serviceLoader) => serviceLoader({
   },
 }, [
   require('@mazeltov/core/service'),
+  require('@mazeltov/access/service'),
 ]);

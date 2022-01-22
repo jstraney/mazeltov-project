@@ -3,6 +3,10 @@ cookieParser = require('cookie-parser'),
 helmet       = require('helmet');
 
 const {
+  httpController,
+} = require('@mazeltov/core/lib/controller');
+
+const {
   rand: {
     randStr,
   },
@@ -14,15 +18,34 @@ const {
 
 module.exports = (ctx) => {
 
-  const logger = ctx.loggerLib(`${ctx.SERVICE_NAME}/controller/http/_middleware`);
+  const {
+    services: {
+      settingService: {
+        getSettings,
+      },
+    }
+  } = ctx;
 
-  // TODO: replace this with a call to hookService.invokeReduce('httpMiddleware')
-  return [
-    (req, res, next) => {
+  const [
+    appName,
+    cookieDomain,
+    cookieSecret,
+    cookieMaxage,
+  ] = getSettings([
+    'app.name',
+    'app.cookieDomain',
+    'app.cookieSecret',
+    'app.cookieMaxage',
+  ]);
+
+  const logger = ctx.loggerLib(`${appName}/controller/http/_middleware`);
+
+  return httpController('base', ctx).use([
+    ['useNonce', (req, res, next) => {
       res.locals.nonce = randStr();
       next();
-    },
-    helmet({
+    }],
+    ['helmet', helmet({
       // Some web form functionality depends on the referrer to be set
       referrerPolicy: { policy: 'same-origin' },
       contentSecurityPolicy:{
@@ -34,15 +57,15 @@ module.exports = (ctx) => {
           ],
         },
       },
-    }),
-    requestLogger({ logger }),
-    cookieParser(ctx.COOKIE_SECRET, {
-      domain: ctx.COOKIE_DOMAIN,
-      maxAge: ctx.COOKIE_MAXAGE,
+    })],
+    ['requestLogger', requestLogger({ logger })],
+    ['cookieParser', cookieParser(cookieSecret, {
+      domain: cookieDomain,
+      maxAge: cookieMaxage,
       httpOnly: true,
       secure: true,
       sameSite: 'strict',
-    }),
-  ]
+    })],
+  ]);
 
 };

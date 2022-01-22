@@ -1,13 +1,13 @@
 extends ../email
 
 block title
-  h1 Welcome to #{ORG_NAME}!
+  h1 Welcome to #{APP_ORG_NAME}!
 
 block content
 
-  -const verifyURL = `${SERVICE_URL}/verify/${result.emailVerificationToken}`;
+  -const verifyURL = `${APP_URL}/verify/${result.emailVerificationToken}`;
   p.
-    Welcome to #{ORG_NAME}. You have taken the first step to receiving
+    Welcome to #{APP_ORG_NAME}. You have taken the first step to receiving
     the quality service that we offer. To take full advantage of your
     account, you still need to verify your email by:
 
@@ -19,4 +19,4 @@ block content
     a(href=verifyURL)=verifyURL
 
   p.
-    Thanks for choosing #{ORG_NAME}!
+    Thanks for choosing #{APP_ORG_NAME}!
