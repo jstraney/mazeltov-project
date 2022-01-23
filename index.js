@@ -10,6 +10,7 @@ const init = async ( passedCtx = {} ) => {
   const ctx = {
     ...passedCtx,
     appRoot: __dirname,
+    inProject: isEntryPoint,
     loggerLib: require('@mazeltov/core/lib/logger'),
   };
 
