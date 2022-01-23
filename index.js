@@ -7,6 +7,8 @@ const isEntryPoint = process.argv[1] === __filename;
 
 const init = async ( passedCtx = {} ) => {
 
+  isEntryPoint && require('dotenv').config();
+
   const ctx = {
     ...passedCtx,
     appRoot: __dirname,
