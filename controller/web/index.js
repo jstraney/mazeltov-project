@@ -2,7 +2,7 @@ module.exports = async (ctx, webRouterLoader) => webRouterLoader(ctx, [
 
   '_middleware',
 
-  'admin',
+  require('@mazeltov/core/controller/web'),
 
   'page',
 
