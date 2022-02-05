@@ -18,7 +18,6 @@ module.exports = ( ctx = {} ) => {
     viewTemplate({
       title: 'Welcome',
       template: 'index',
-      logger,
     }),
   ]);
 
