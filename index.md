@@ -9,211 +9,499 @@ Mazeltov is an MVC framwork written in Nodejs, PostgreSQL and Redis cache.
 
 ## Table of Contents
 
-* [Installing](#installing)
+* [New Project](#new-project)
 * [Project Layout](#project-layout)
 * [Tutorial](#tutorial)
 
-## Installing
+## New Project
 
 To create a new project, say `app` for example, run:
 
 ```sh
-npx @mazeltov/cli project create app
+npm i -g @mazeltov/core
+
+# Follow the prompts after running command below. You can change it later!
+mazeltov project create app
+cd app
 ```
 
-If you are git cloning a project you've already made and want to create local SSL certs and set up .env run this from inside the directory:
+Mazeltov projects come with a dockerfile to use for local development but you are not required to use this for a production environment. In fact, we have a guide on [going to production](#going-to-production).
 
 ```sh
-npx @mazeltov/cli project setup
-```
-
-Once your project is set up, you'll have to run:
-
-```sh
-# run this in one shell (or use -d flag)
+# run this in a separate shell (or add -d flag to end)
 docker-compose up
-
-# create necessary database tables and records
-npm run migrate
-npm run seed
 ```
-Once that's set up, you should be able to visit your site in your browser. You may get a warning about the certificate, but click on "Advanced" an trust it (this is okay for local development).
 
+A mazeltov module is a nodejs module that follows a semantic structure as described under [making a module](#making-a-module). The added benefit here is that the modules can contain their own schemas that are migrated on install and provide isolated features, endpoints and so-on. To run installation prompts, migrations and other crucial steps, the mazeltov cli is used instead of npm. Only core is required to use Mazeltov, but @mazeltov/access is used in this tutorial.
+
+```
+mazeltov module install core
+# This one will prompt you and the defaults should be good. Make an admin user and write down the password generated or pick one that you'd like.
+mazeltov module install @mazeltov/access
+```
+
+**SERIOUSlY:** write down the admin password generated above or make it 1234, you'll need to sign in later.
 
 ## Project Layout
 
+These are the semantics followed for every project and for every mazeltov contributed module.
+
 * controller - Controllers gather args from http, or cli and pass to the model
 * model - Models are responsible for "modeling" business logic and writing to database
-* service - Should sending emails/sms be in a model? response caching? logging? Services exist to abstract code outside of controllers so they do not become bloated.
+* service - Should sending emails/sms be in a model? response caching? logging? Services exist to abstract code outside of controllers so they do not become bloated. Services are also where most hooks are registered.
 * public - static assets (js, css, static images)
 * view - dynamic page templates (pug by default)
 * migrate - Database migration files.
 * seed - database seed files for static records. Shared seeders go here and are symlinked to seed/dev and seed/prod
   * seed/dev - development seed files like test records
   * seed/prod - production seed files
-* rsa - This includes a generated asymmetric key pair for signing JWTs as well as SSL cert key pairs for encryption during local development. DO NOT USE rsa/server.\* for production! These files are gitignored and you are not beholdent to store your keys here in prod (see example.env).
+* rsa - This includes a generated asymmetric key pair for signing JWTs as well as SSL cert key pairs for encryption during local development. DO NOT USE rsa/server.\* for production! These files are gitignored and you probably shouldn't store your keys here in prod (see example.env).
+* lib - Standalone libraries
+
+## Configuring Modules
+
+When you ran `mazeltov module install @mazeltov/access` the following happened.
+
+* npm fetched @mazeltov/access
+* anything under `view` in this module was symlinked (so the views can be extended)
+* any migration under `migrate` was run (your database should be up when you run this command)
+* an `install.js` file was found in the `service` directory and was run.
+
+But there are still some things that Mazeltov does not do:
+
+* Add services, models and controllers from the contributed module (we will do this next)
+* Run `mazeltov module install` on dependencies
+
+So to add the services, models and controllers add the following to the end of the array passed to the service loaders.
+
+**To service/index.js**
+```js
+  require('@mazeltov/access/service'),
+```
+
+**To model/index.js**
+```js
+  require('@mazeltov/access/model'),
+```
+
+**To controller/web/index.js**
+```js
+  require('@mazeltov/access/controller/web'),
+```
+
+**To controller/api/index.js**
+```js
+  require('@mazeltov/access/controller/api'),
+```
+
+**To controller/cli/index.js**
+```js
+  require('@mazeltov/access/controller/cli'),
+```
+
+Another limitation of mazeltov is that it does not seemlessly reload your app after you run install and update these files.
 
 ## Tutorial
 
 To start understanding how things are tied together follow this tutorial. We are not going to beat you over the head with a "Concepts" section, as the concepts should (hopefully) be clear from each part.
 
 * [First MVC](#first-mvc)
+  * [Migration](#migration)
   * [Model](#model)
   * [Controller](#controller)
   * [View](#view)
   * [Service](#service)
   * [First MVC Conclusion](#first-mvc-conclusion)
-
-* [MVC Improved](#mvc-improved)
-  * [Migration](#migration)
   * [Model From Context](#model-from-context)
   * [Route Building](#route-building)
   * [Validation](#validation)
   * [Access Control](#access-control)
 
-### First MVC
+## First MVC
 
-#### Model
+### Migration
 
-We will make a trivial MVC (model, view, controller) just to see how the pieces of the system work together. A model is responsible for **modeling** the entities in our applications and reading and writing them to our database.
+Migrations in Mazeltov use knexjs as their foundation but use a different set of tables.
 
-Add these contents in `model/cat.js`
+Additionally, each migration is separated by a moduleName column to easier separate migrations into schemas.
+
+Therefore:
+
+* You should put your migrations in a schema
+* You should only use FK constraints on third party schemas if you accept that changes to their schemas could break yours
+
+To make a migration for your project
+
+`mazeltov migration make createCatTable`
+
+You'll see that it created a migration in your project, edit this file:
+
+```
+exports.up = async (trx) => {
+  await trx.raw('CREATE SCHEMA IF NOT EXISTS cat;');
+  await trx.schema.withSchema('cat')
+    .createTable('cat', (table) => {
+      table.text('name').primary();
+      table.text('saying');
+    });
+};
+
+exports.down = async (trx) => {
+  await trx.schema.withSchema('cat')
+    .dropTable('cat');
+};
+```
+
+**Notice:** You must await your queries otherwise they may not complete causing incomplete queries.
+
+By default, your migrations will be wrapped in a transaction (so no need to call trx.commit or trx.rollback)
+
+This is one of many reasons postgres was chosen as the default RDBMS is because MySQL doesn't allow this for schema changes.
+
+Once that's in place, try `mazeltov migration run`
+
+To roll back all changes in last migration, try `mazeltov migration rollback`
+
+Defining your models
+
+### Seeders
+
+Lets add some test records
+
+A seeder will populate your database with test records. Seeders are split between dev and prod subdirectories. You don't have to use production seeders and can add records in migrations if that works best for you. Seeders will run in alphabetical order so if an order is preferred you can rename them with dates or numerical prefixes.
+
+`mazeltov seed make testRecords`
+
+edit the seeder at ./seed/dev/testRecord
+
+```
+module.exports = async (trx) => {
+  await trx('cat').withSchema('cat').insert([
+    {
+      name: 'Ron',
+      saying: 'Thats meee!',
+    },
+    {
+      name: 'Wendy',
+      saying: 'Its cat time...',
+    },
+    // add more!
+  ])
+  .onConflict('name')
+  .merge();
+}
+```
+
+**Notice**: It's also important to await queries in seeders so they complete.
+
+### Services
+
+Services are the foundation of mazeltov. If your code doesn't *model* something
+or *control* input to the model, there's a good chance that a *service* is the
+right place for it.
+
+Some things that come included in core that are wrapped in up services:
+
+* The hook system
+* Database access
+* Caching
+* Sending e-mails
+* Application settings (both in .env and database)
+* Migration and seeder management
+* Route definition and retrieval
+
+All of this messy logic is abstracted away in services which get injected into models.
+Models are then injected into controllers.
+
+Services are loaded using loaders, and each loader has a type. *models* and *controllers*
+are technically a type of *service*. When a service is simply used to get a job done we
+say it is a *basic service*.
+
+A lot of heavy lifting and pluggability is handled by a hookService loaded by core. Try this just as an example:
 
 ```js
-module.exports = ( ctx = {} ) => {
+// ./service/test.js
+module.exports = ( ctx ) => {
 
   const {
-    loggerLib,
+    services: {
+      hookService: {
+        onRedux,
+      },
+    },
   } = ctx;
 
-  const logger = loggerLib(`${ctx.SERVICE_NAME}/model/cat`);
+  onRedux('entityInfo', (entities) => {
+    console.log('%o', entities);
 
-  const getCat = async ( args = {} ) => {
-
-    const {
-      id,
-    } = args;
-
-    logger.info('Get you cat #%s right meow!', id);
-
-    return {
-      id,
-      name: 'Felix',
-    };
-
-  },
+    return entities;
+  });
 
   return {
-    getCat,
-    get: getCat,
+    example: (a) => console.log('testing! %o', a),
   };
 
 };
 ```
 
-Now to make the model available to your application add it to `./model/index.js`:
+Then add this
 
-```sh
-module.exports = ( ctx = {} ) => require('@mazeltov/model')(ctx, [
-  'permission',
-  'role',
-  // omitted for brevity
-  'account',
-  // put your model at the end.
-  'cat'
+```js
+// ./service/index.js
+  'test',
+])
+```
+
+You'll see this loader pattern (like in service/index.js). The way loaders work is that each service instance is loaded in order and becomes accessible to the previous one. If we made a `testTwo.js` file under `./service` and added it's name to the service/index.js file after 'test', it would have access to the 'testService' under the 'services' context object.
+
+Redux is short for reduce. It is absolutely important to always return something from a reducer or else you will get warnings and your code will most likely break.
+
+### Model
+
+At the end of the day, the model is just a collection of methods that accept an object
+called args (passed from controller) and return a another object.
+
+```js
+module.exports = ( ctx ) => {
+
+  const {
+    services: {
+      dbService: db,
+    },
+  } = ctx;
+
+  const get = async ( args = {} ) => {
+
+    const {
+      name,
+    } = args;
+
+    return db('cat')
+      .withSchema('cat')
+      .where({name});
+
+  };
+
+  return {
+    get,
+    // if you want to use automatic controllers, you need to assign properties here
+    // this is not required if you are building your routes yourself.
+    _entityInfo: {
+      entityName: 'cat',
+      schema: 'cat',
+      key: ['name'],
+    }
+  };
+
+}
+```
+
+### Model Shorthand
+
+There is an automagic way to bootstrap your models using schema information autoloaded by
+the core modelService.
+
+This is a minimum CRUD model. This variable `ctx` is short for context and it
+is important to fill it in along with other properties of the model. the entityName
+and schema are mandatory.
+
+The result is an an object with a method of get, create, update, remove and list. Each
+method accepts an object called **args** and returns a **result**
+
+The shorthand below is a quick way to produce these methods. The strings are resolved to actions provided by onRedux('entityAction')
+
+```js
+// ./model/cat.js
+const {
+  modelFromContext,
+} = require('@mazeltov/core/lib/model');
+
+module.exports = async ( ctx ) => modelFromContext({
+  ...ctx,
+  entityName: 'cat',
+  schema: 'cat',
+  selectColumns: [
+    'name',
+    'saying',
+  ],
+  createColumns: [
+    'name',
+    'saying',
+  ],
+  updateColumns: [
+    'saying',
+  ],
+  onBuildListWhere: {
+    equals: [
+      'name',
+    ],
+    like: [
+      'saying'
+    ],
+  },
+}, [
+  'get'
+  'create',
+  'update',
+  'remove',
+  'list',
+]);
+
+```
+
+Then add this to `./model/index.js`
+
+```js
+module.exports = (ctx, modelLoader) => modelLoader(ctx, [
+  /* exisitng code ... */
+  'cat',
 ]);
 ```
 
-Models are resolved as such:
+Mazeltov will look for a file in your model directory called 'cat'. If it can't find it,
+it will try to load a core mazeltov file in the same place. You can also put a function
+here that accepts the ctx and returns the model (such as we did for @mazeltov/access)
 
-* A file by that name is looked for in this directory
-* Then a file by that name is looked up in @mazeltov/model/<model-name>.js
-* You can also pass an array ['name', func] where func is a function similar to the one exported in your cat model. The goal of this is to allow contributed modules to be developed in the future.
+### Controller
 
-A few other important details:
-
-* Models are loaded in order and each one's ctx (context) has a property called `models` that has all previously loaded models (as dependencies).
-
-#### Controller
-
-Every method (called an action) of a model accepts a single paramater; an object called **args**. args is passed to the model by a **controller**. That's it! A controller accepts some kind of `request`, derives value from it, possibly validates the request and offers some access control and passes the args to the model.
-
-Mazeltov's core controllers are http controllers (express based) and cli controllers.
-
-Create a new api controller for the cat model at `./controller/api/cat`
+Just like you can add 'cat' to the model/index.js file, you can add this to `./controller/web/index.js`, `./controller/api/index.js`, and `./controller/cli/index.js` along with localized files in each called 'cat.js'. Here are some basic examples:
 
 ```js
+// ./controller/web/cat.js
 const {
+  useArgs,
   consumeArgs,
-  viewJSON,
-} = require('@mazeltov/middleware');
+  viewTemplate,
+} = require('@mazeltov/core/lib/middleware');
 
-module.exports = ( ctx = {} ) => {
+const {
+  webController,
+} = require('@mazeltov/core/lib/controller');
+
+module.exports = ( ctx ) => {
 
   const {
     models: {
       catModel,
     },
-    loggerLib,
   } = ctx;
 
-  const logger = loggerLib(`${ctx.SERVICE_NAME}/controller/api/cat`);
-
-  const router = require('express').Router()
-
-  router.get('/cat/:id', [
-    useArgs({
-      params: [
-        'id'
-      ],
-      logger,
-    }),
-    consumeArgs({
-      consumer: catModel.get,
-      logger,
-    }),
-    viewJSON({
-      logger,
-    }),
-  ]);
-
-  return router;
+  return webController('cat', ctx)
+    .get('get:cat.cat', [
+      useArgs, {
+        params: ['name'],
+      },
+      consumeArgs, {
+        consumer: catModel.get,
+      },
+      viewTemplate, {
+        template: 'cat/view'
+      },
+    ])
 
 };
 ```
-Mazeltov includes its own middleware libraries to solve a variety of issues up front.
-
-Add this to `./controller/api/index.js`
 
 ```js
-module.exports = (controllers) => controllers.httpController.apiRouters([
-  '_middleware',
+// ./controller/api/cat.js
+const {
+  useArgs,
+  consumeArgs,
+  viewJSON,
+} = require('@mazeltov/core/lib/middleware');
 
-  'permission',
+const {
+  apiController,
+} = require('@mazeltov/core/lib/controller');
+
+module.exports = ( ctx ) => {
+
+  const {
+    models: {
+      catModel,
+    },
+  } = ctx;
+
+  return apiController('cat', ctx)
+    .get('get:cat.cat', [
+      useArgs, {
+        params: ['name'],
+      },
+      consumeArgs, {
+        consumer: catModel.get,
+      },
+      viewJSON
+    ])
+
+};
+```
+
+```js
+// ./controller/cli/cat.js
+module.exports = ( ctx ) => {
+
+  const {
+    models: {
+      catModel,
+    },
+  } = ctx;
+
+  return {
+    'cat get': {
+      consumer: catModel.get,
+      options: [
+        { name: 'name', type: String, defaultOption: true },
+        { name: 'saying', type: String },
+      ],
+    }
+  };
+
+};
+```
+
+Now try `mazeltov cat get --help` from the command line.
+
+### Controller Shorthand
+
+The controller is responsible for passing off parts of the request to the model. If you
+are using the modelFromContext helper, you can define your routes using this short-hand
+syntax. To use the shorthand syntax, you **MUST** have an \_entityInfo property on the exported model.
+
+```js
+// ./controller/web/index.js
+module.exports = (ctx, webControllerLoader) => webControllerLoader(ctx, [
+  /* exisitng code ... */
+  'cat',
   [
+    'list',
     'create',
+    'get',
     'update',
     'remove',
-    'list',
   ],
-
-  // omitted for brevity
-
-  'cat',
-
 ]);
 ```
 
-Similar to the models index, controllers:
+This short-hand form does the following:
 
-* When the controller is a string with no array following it
-  * Checks the immediate directory for your controller file
-  * Check @mazeltov/controller/(api|web|cli) for a controller
-* When an array follows (with optional object after)
-  * A controller is scaffolded from the model with middleware
-  * Requires using `modelFromContext` and is covered later
+* Looks for a loaded model called *catModel*
+* Checks for methods with these names
+* Builds out an **webHttpController** (built with express)
+* core hooks and reducers allow you and other module developers to hook into how these are generically built for any given resource (if you're interested in a deep dive, check out the core webController service)
 
-Try visiting 'https://(your-app)/api/cat/10'
+If we omitted the array and just passed a string, we can define a file called `cat.js` in the
+`./controller/web` directory like we did for our model. Passing an object after the array as
+a configuration object is also permissible for this loader. It is possible to define your own
+kinds of loaders and even extend them into sub-types (like controllers have web, api and cli).
+
+Because HTML forms support only GET and POST, each web route follows these rules
+
+* uri is the same for GET and POST (as defined in reducers in webController service)
+* there are not different model methods (like "edit", "new"), rather, the "get" model method is used
+  to fetch the result for the create form when the GET HTTP method is used and the "create" model
+  method is used when POST is sent.
+
+You should see the routes printed out to console with DEBUG logging.
 
 ### View
 
@@ -224,384 +512,259 @@ After the controller passes args to the model, the model returns:
 
 The result or the error is rendered by a view
 
-This is done transparently in a way most Node developers would expect:
-
-* For http routes:
-  * When the response is JSON, use the viewJSON middleware,
-  * When the response is HTML use viewTemplate which finds templates in `view`,
-* For CLI routes
-  * The result (returned model value) is printed to stdout
-
 In the case of http, result and error are attached to res.locals for templates.
 
-### Service
+Using the **auto-loaded controller** style above, these are the pug templates you
+can use for your cat resource
 
-What about sending e-mails, or caching, 3rd party api requests and other supportive functions that don't directly relate to the entities our application models?
+* `./view/cat/index.pug` for **list**
+* `./view/cat/view.pug` for **get**
+* `./view/cat/edit.pug` for **update**
+* `./view/cat/remove.pug` for **remove**
+* `./view/cat/new.pug` for **create**
 
-Typically in MVC, this logic can get stuffed into a controller, but it can make the controller cludgy and bloated with rigid code and logic.
+#### List View
 
-Mazeltov's solution to this is services which are just code packages that do supportive functions. These are loaded from the `service` directory in a similar way to models and controllers.
-
-A service can then be injected into a model, or a controller to do whatever it does.
-
-### Conclusion I
-
-And that is the gist of how a mazeltov app is structured. But there is obviously much much more to be done, so we will graduate to using the database, adding access control, and more.
-
-## MVC Improved
-
-In this section we will cover
-
-* Creating migrations to store entities in our database
-* Rapidly building models with modelFromContext
-* Validation
-* Access control (auth)
-
-### Migrate
-
-#### Intro
-
-Migrations are managed by knexjs. Mazeltov core comes with it's own migrations (for auth). Any core migrations are symlinked from `node_modules/@mazeltov/model/migrations/core/*` to your projects `migrate` directory.
-
-You are responsible for ensuring your migrations play nice with core migrations and tamper with them at your own peril (don't do this). Core migrations have to be manually symlinked (but if someone would open an issue/PR for @mazeltov/cli to auto-symlink core migrations with some command that'd be great!)
-
-There is an example migration for an account schema that is yours to edit to your needs. Generally as a rule **If it is not symlinked to core, it's fine to edit**
-
-[KnexJS Docs](https://knexjs.org/)
-
-Run `npm run make-migration createCatTable`
-
-Once that's in place, edit `migrate/(some-date)_createCatTable.js`:
+We're going to be making a lot of forms and pages so we'll re-use some of
+the menus by registering them in a service.
 
 ```js
-exports.up = function (knex) {
-  return knex.schema.withSchema('cat').createTable('cat', (table) => {
+// ./service/appMenu.js
+module.exports = ( ctx ) => {
 
-    table.increments();
+  const {
+    services: {
+      menuService: {
+        registerMenus,
+      },
+    },
+  } = ctx;
 
-    table.string('name');
-
-    table.string('catSaying');
-
-    table.boolean('isChonky').defaultTo(true);
-
-    table.integer('accountPersonId')
-      .references('personId')
-      .inTable('account.person')
-      .onUpdate('CASCADE')
-      .onDelete('CASCADE');
-
-    table.timestamps(true, true);
-
+  // Each property is a menu id (just has to be unique). Each
+  // item has a routeId as it's key and an array with the readable label
+  // and permission ACLs tied to the link.
+  registerMenus({
+    // We'll use this as the top-level menu
+    'list:cat.cat:primary': {
+      items: {
+        'list:cat.cat': ['All Cats', ['can list cat']],
+        'create:cat.cat' : ['New Cat', ['can create cat']],
+      },
+    },
+    // This is the localized menu for each record
+    'list:cat.cat:local': {
+      items: {
+        'update:cat.cat': ['Edit', ['can update cat']],
+        'remove:cat.cat': ['Remove', ['can remove cat']],
+        'get:cat.cat': ['View', ['can get cat']],
+      },
+    },
   });
-}
 
-exports.down = function (knex) {
-  return knex.schema.withSchema('cat').dropTable('cat');
 }
 ```
 
-Run your migration `npm run migrate`
-
-### Model From Context
-
-And now the fun part, we'll create a model... from context! back in `model/cat.js`
-
 ```js
-const {
-  creator,
-  getter,
-  updater,
-  lister,
-  remover,
-  modelFromContext,
-} = require('@mazeltov/model/lib');
-
-module.exports = ( ctx ) => modelFromContext({
-  ...ctx,
-  key: 'id',
-  entityName: 'cat',
-  schema: 'cat',
-  selectColumns: [
-    [
-      'cat',
-      [
-        'id',
-        'name',
-        'isChonky',
-        'catSaying',
-        'accountPersonId',
-        'createdAt',
-        'updatedAt',
-      ],
-    ],
-    [
-      'account',
-      [
-        'personId',
-      ]
-    ],
-  ],
-  createColumns: [
-    'name',
-    'isChonky',
-    'catSaying',
-    'accountPersonId',
-  ],
-  updateColumns: [
-    'name',
-    'isChonky',
-    'catSaying',
-  ],
-  joins: [
-    ['innerJoin', 'account.account AS account', 'account.personId', 'cat.accountPersonId']
-  ],
-  // query builder for multiple cat search
-  onBuildListWhere: {
-    like: [
-      'catSaying',
-      'name',
-    ],
-    equals: [
-      'id',
-    ],
-  },
-}, [
-  creator,
-  updator,
-  getter,
-  lister,
-  remover,
+// ./service/index.js
+  /*... put this at end of loaded services*/
+  'appMenu',
 ]);
 ```
 
-This produces a model with methods:
+**list** actions will use a template called "index.pug" by default. So the
+following is added to the `./view/cat/index.pug path`
 
-* create, createCat,
-* update, updateCat,
-* remove, removeCat,
-* get, getCat,
-* list, listCat,
+```pug
+// ./view/cat/index.pug
+extend /layout/page
 
-### Route Building
+block content
 
-Now we can scaffold an API endpoint for all these methods, by changing `controller/api/index.js`
+  h1 Cats
 
-```js
-// change this in controller/api/index.js
-'cat'
+  +menu('list:cat.cat:primary').inline.primary
 
-// to
-'cat',
-[
-  'create',
-  'list',
-  'get',
-  'update',
-  'remove',
-],
+  +form('All Cats').ui-frame
+
+    // this builds out a paginated table for us
+    +result-table(result, [
+      ['name', 'Cat Name'],
+      ['saying', 'Cat Saying'],
+      ['actions', 'Actions', { menu: 'list:cat.cat:local' }],
+    ])
 ```
 
-And now your app will have routes for:
+Core includes a variety of mixins to make building pages faster but it's just pug at the end of the day. Any pug include or path beginning with a leading forward slash starts from the ./view directory. When a module is installed and has a view directory, it's views are symlinked to your project.
 
-* GET /api/cat/list
-* GET /api/cat/:id
-* POST /api/cat
-* DELETE /api/cat/:id
-* PUT /api/cat/:id
+Some view globals of interest:
 
-These routes:
+* result
+* error
+* session
+* gate
+* request
+* args
+* csrfToken
+* nonce
 
-* Do not have access control (yet!)
-* Use, createColumns, updateColumns, and selectColumns for useArgs middleware
-* Are great for scaffolding a ton of boiler-plate routes
-* If you need more control of middleware you can stick to a file (like we had)
+#### New View
+
+```pug
+// ./view/cat/new.pug
+extends /layout/page
+
+block content
+
+  +menu('list:cat.cat:primary').inline.primary
+
+  +form('New Cat')(method='post').ui-frame.med-width
+
+    label(for='name').required Cat Name
+
+    +input(
+      id='name'
+      name='name'
+      type='text'
+    )
+
+    label(for='saying').required Cat Saying
+
+    +input(
+      id='saying'
+      name='saying'
+      type='text'
+    )
+
+    div.actions
+      input(type='submit' value='Create Cat')
+```
+
+#### Edit View
+
+```pug
+// ./view/cat/edit.pug
+extends /layout/page
+
+block content
+
+  +menu('list:cat.cat:primary').inline.primary
+
+  +form('Edit Cat')(method='post').ui-frame.med-width
+
+    label(for='saying') Cat Saying
+
+    +input(
+      id='saying'
+      name='saying'
+      type='text'
+      value=result.saying
+    )
+
+    div.actions
+
+      input(type='submit' value='Update Cat')
+```
+
+#### Remove View
+
+```pug
+// ./view/cat/remove.pug
+extends /layout/page
+
+block content
+
+  +menu('list:cat.cat:primary').inline.primary
+
+  +form('Remove Cat')(method='post').ui-frame.med-width
+
+    input(type='hidden' value=result.name)
+
+    p.form-prompt.
+      The cat <strong>#{result.name}</strong> will be permanently removed
+
+    div.actions
+      input(type='submit' value='Remove Cat')
+```
 
 ### Validation
 
-We are now going to add validation to our model.
+Validators should reside on your model and follow the semantic naming convention of 'validate{Action}' in camel case.
 
-```js
-// include cross, which makes a cross product of multiple arrays
+If no validator method is found on the model, no validation is applied automatically when using the controller short-hand.
+
+However, there is a validateArgs middleware which could be used if you're writing your controller manually:
+
+```
+// ./controller/api/cat.js
+const {
+  validate: {
+    isNotEmpty,
+    isString,
+    withLabel,
+  },
+} = require('@mazeltov/core/lib/util');
+
+const {
+  // ...
+  validateArgs,
+} = require('@mazeltov/core/lib/middleware');
+
+// ...
+
+  return apiController('cat', ctx)
+    .get('get:cat.cat', [
+      useArgs, {
+        params: ['name'],
+      },
+      validateArgs, {
+        // You can pass validators to controller directly
+        validate: {
+          name: withLabel('Cat name', [
+            isNotEmpty,
+            isString,
+          ]),
+        },
+        // OR: do this. not both though
+        validator: catModel.validateGet,
+      },
+      consumeArgs, {
+        consumer: catModel.get,
+      },
+      viewJSON
+    ]);
+```
+Because all controllers should normalize input into an object called `args`, putting the validator in the model may be most practical. Some may feel more strongly about putting it each controller.
+
+### Access Control
+
+**NOTE:** Everything in this section relies on @mazeltov/access to be installed. If you want to write your own access control, you are welcome to, just do your own research. It could be for your use case you only need opaque tokens and not JWTs or want to run an local API behind a firewall without auth. Core Mazletov does not make these assumptions for you.
+
+Some of this may be moved to the @mazeltov/access project in the future and linked.
+
+Mazeltov primarily uses JSON Web Tokens for authentication, and internal database tables for authorization. JWTS have data in them called claims, and some data has been standardized into what are called **standard claims**. Most access control relies on a claim called the subject which is usually the person the token was granted for.
+
+Similar to validators, access is controlled creating subjectAuthorizor methods.
+
+```
 const {
   collection: {
     cross,
   },
-  validate: {
-    isNotEmpty,
-    isString,
-    isBoolean,
-    withLabel,
-    withPaginators,
-  }
-} = require('@mazeltov/util');
+} = require('@mazeltov/core/lib/util');
 
-const {
-  creator,
-  getter,
-  updater,
-  lister,
-  remover,
-  // include validator action builder
-  validator,
-  modelFromContext,
-} = require('@mazeltov/model/lib');
-
-module.exports = ( ctx ) => modelFromContext({
-  ...ctx,
-  key: 'id',
-  entityName: 'cat',
-  schema: 'cat',
-  selectColumns: [
-    [
-      'cat',
-      [
-        'id',
-        'name',
-        'isChonky',
-        'catSaying',
-        'accountPersonId',
-        'createdAt',
-        'updatedAt',
-      ],
-    ],
-    [
-      'account',
-      [
-        'personId',
-      ]
-    ],
-  ],
-  createColumns: [
-    'name',
-    'isChonky',
-    'catSaying',
-    'accountPersonId',
-  ],
-  updateColumns: [
-    'name',
-    'isChonky',
-    'catSaying',
-  ],
-  joins: [
-    ['innerJoin', 'account.account AS account', 'account.personId', 'cat.accountPersonId']
-  ],
-  // query builder for multiple cat search
-  onBuildListWhere: {
-    like: [
-      'catSaying',
-      'name',
-    ],
-    equals: [
-      'id',
-    ],
-  },
-  validators: {
-    id: withLabel('Cat id', [
-      isNotEmpty,
-      isUnsigned,
-    ]),
-    name: withLabel('Cat name', [
-      isNotEmpty,
-      isString,
-    ]),
-    catSaying: withLabel('Cat saying', [
-      isNotEmpty,
-      isString,
-    ]),
-    isChonky: withLabel('Is chonky', [
-      isBoolean,
-    ]),
-    accountPersonId: withLabel('Owner', [
-      isNotEmpty,
-      isString,
-    ]),
-    ...withPaginators()
-  },
-}, [
-  creator,
-  updator,
-  getter,
-  lister,
-  remover,
-  // cross produces [[ validator, {...}], [validator, {...}] ...]
-  ...cross([ validator ], [
-    {
-      fnName: 'validateCreate',
-      toValidate: [
-        'name',
-        'catSaying',
-        'isChonky',
-        'accountPersonId',
-      ],
-    },
-    {
-      fnName: 'validateUpdate',
-      toValidate: [
-        'id',
-        'name',
-        'catSaying',
-        'isChonky',
-      ],
-      optional: [
-        'isChonky',
-      ],
-    },
-    {
-      fnName: 'validateGet',
-      toValidate: [
-        'id',
-      ],
-    },
-    {
-      fnName: 'validateRemove',
-      toValidate: [
-        'id',
-      ],
-    },
-    {
-      fnName: 'validateList',
-      toValidate: [
-        'id',
-        'name',
-        // ...withPaginators() adds validators for these. These
-        // are standard for list actions.
-        'page',
-        'limit',
-      ],
-  ]),
-]);
-```
-
-When building actions (second aray passed to modelFromContext) we can:
-
-* put functions in this array
-* or an array with with the function and a ctx (context) override
-
-Here, we use the `cross` function to produce many function, config pairs and each one has it's own fnName property. This allows fields to easily be re-used accross numerous validators.
-
-Now, the controller will check that functions (named validate{action}) exist and adds validateArgs middleware. Try sending a request to '/api/cat/roy' to get a 400 response.
-
-### Access Control
-
-Mazeltov primarily uses JSON Web Tokens for authentication, and internal database tables for authorization. JWTS have data in them called claims, and some data has been standardized into what are called **standard claims**. Most access control relies on a claim called the subject which is usually the person the token was granted for.
-
-Similar to validators, access is controlled creating subjectAuthorizor methods
-
-```
 const {
   //...
   subjectAuthorizor,
-} = require('@mazeltov/model/lib');
+} = require('@mazeltov/core/lib/model');
 
 module.exports = ( ctx ) => modelFromContext({
   ...ctx,
   //...
 }, [
-  creator,
-  updater,
+  'create',
+  'update',
   //...
-  ...cross([ subjectAuthorizor ], [
+  ...cross([ 'canAccess' ], [
     {
       fnName: 'canCreate',
       scoped: true,
@@ -628,7 +791,44 @@ module.exports = ( ctx ) => modelFromContext({
 ]);
 ```
 
-Just like with validation, our bootstrappd controller now sees there is a can(action) method and adds a middleware called `canAccess`
+For each method produced in the cross product above, it generates a method with the respective **fnName**. We can hard code a subjectAuthorizor method like this:
+
+```js
+const {
+  error: {
+    ForbiddenError,
+  },
+} = require('@mazeltov/core/lib/util');
+
+// ...
+
+const canGet = ( args ) => {
+  // these properties here are set internally and should NEVER be
+  // allowed to be set by useArgs or sent in by the user.
+  const {
+    _subject = null,
+    _scopes = [],
+    _subjectPermissions = {},
+    _subjectIsAdmin = false,
+  } = args;
+
+  // do your custom logic here
+  if (_subjectIsAdmin) {
+    return true;
+  }
+
+  if (_subjectPermissions['can get cat']) {
+    retrun true;
+  }
+
+  throw new ForbiddenError('Hey! No cat for you');
+
+};
+```
+
+But special care has been taken to make the generated functions in the first example generic. You may want to just use them as is and if you have very special business logic (subscription limits, checking if user A has approved user B's access), you may want to just check this in the model's action and throw an error (which is okay too as long as the error is typed to the status code you want to return).
+
+Just like with validation, our bootstrappd controller now sees there is a can(action) method and adds a middleware called `canAccess`. If we build the controller ourselves, we just pass this as a property called `checkMethod`.
 
 What does this do? Now when an API request is made:
 
