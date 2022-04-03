@@ -1,6 +1,6 @@
 {
   "name": "@mazeltov/project",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -17,7 +17,7 @@
     "mvc"
   ],
   "dependencies": {
-    "@mazeltov/core": "2.0.5",
+    "@mazeltov/core": "2.1.0",
     "bcrypt": "^5.0.1",
     "change-case": "^4.1.2",
     "connect-redis": "^6.0.0",
