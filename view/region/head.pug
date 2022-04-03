@@ -12,12 +12,12 @@ block styles
     rel="stylesheet"
   )
   -assets.style('mazeltov-core')
+  if assets.have('style')
+    style!=assets.loadEach('style')
 block scripts
   -assets.script('jquery-core')
   -assets.script('jquery-ui-core')
   -assets.script('mazeltov-core')
   -assets.script('mazeltov-access')
-if assets.have('style')
-  style!=assets.loadEach('style')
-if assets.have('script')
-  +script!=assets.loadEach('script')
+  if assets.have('script')
+    +script!=assets.loadEach('script')

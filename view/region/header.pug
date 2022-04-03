@@ -1,6 +1,6 @@
 nav
   a.logo(href="/")
-    img(title=ORG_NAME alt=ORG_NAME src="/image/logos/logo.png")
+    img(title=APP_ORG_NAME alt=APP_ORG_NAME src="/image/logos/logo.png")
   if session && session.whoami
     - const { username } = session.whoami;
     span #{username}
